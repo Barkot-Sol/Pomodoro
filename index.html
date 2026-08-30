@@ -3,419 +3,375 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SYNTH·PULSE // 1984 Retro Arcade Pomodoro Console</title>
-  <meta name="description" content="A bespoke 80s Retro Synthwave Pomodoro Console with glowing CRT horizon display, cassette audio deck, arcade scoreboard, and synthesized chime alerts.">
+  <title>FocusPulse — 80s Synthwave Pomodoro Timer</title>
+  <meta name="description" content="A futuristic 80s Synthwave Pomodoro timer with glowing neon gradients, retro horizon grid, synthesized chime notifications, and ambient focus sounds.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,500;0,700;0,800;1,700&family=JetBrains+Mono:wght@500;700;800&family=Outfit:wght@500;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
-<body data-mode="focus">
-  <!-- Immersive 80s Horizon Background -->
-  <div class="synth-universe">
-    <!-- Starfield -->
-    <div class="stars-layer"></div>
-    <!-- Vector Sunset Sun -->
-    <div class="retro-sun"></div>
-    <!-- Horizon Glow -->
-    <div class="horizon-beam"></div>
-    <!-- Moving 3D Perspective Grid -->
-    <div class="grid-ground">
-      <div class="wireframe-lines"></div>
+<body data-theme="synthwave" data-mode="focus">
+  <!-- Retro Synthwave Ambient Background -->
+  <div class="ambient-background">
+    <!-- Horizon Sun & Nebula Glow -->
+    <div class="synth-sun"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+    <!-- 3D Perspective Retro Grid Floor -->
+    <div class="retro-grid-container">
+      <div class="retro-grid"></div>
+      <div class="retro-horizon"></div>
     </div>
-    <!-- CRT Scanlines & Screen Glass Vignette -->
-    <div class="crt-overlay"></div>
+    <!-- Scanline micro-texture -->
+    <div class="scanlines"></div>
   </div>
 
-  <!-- Main Arcade CyberDeck Container -->
-  <div class="arcade-console">
-    
-    <!-- Top Console Bezel & Status Bar -->
-    <header class="console-bezel">
-      <div class="bezel-screw left"></div>
-      <div class="console-brand">
-        <div class="arcade-badge">
-          <span class="badge-icon">⚡</span>
-          <span class="badge-title">SYNTH<span class="neon-pink">PULSE</span></span>
+  <div class="app-container">
+    <!-- Header Navigation -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
         </div>
-        <span class="system-code">SYSTEM // OVERDRIVE 1984</span>
+        <span class="brand-title">Focus<span class="brand-highlight">Pulse</span></span>
       </div>
 
-      <!-- Top LED Indicators -->
-      <div class="status-leds">
-        <div class="led-indicator active" id="ledStereo" title="Audio Engine Active">
-          <span class="led-light pink"></span>
-          <span class="led-text">STEREO</span>
+      <div class="header-actions">
+        <!-- Daily Streak Badge -->
+        <div class="stat-pill" title="Completed Pomodoro Sessions Today">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" class="icon-flame">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/>
+          </svg>
+          <span id="headerPomoCount">0</span>
+          <span class="stat-label">done</span>
         </div>
-        <div class="led-indicator active" id="ledTurbo" title="Drift-free Precision Timer">
-          <span class="led-light cyan"></span>
-          <span class="led-text">TURBO</span>
-        </div>
-        <div class="led-indicator" id="ledRec" title="Active Focus Recording">
-          <span class="led-light red"></span>
-          <span class="led-text">FOCUS</span>
-        </div>
-      </div>
 
-      <!-- Quick Header Controls -->
-      <div class="bezel-actions">
-        <!-- Sound Mute Toggle -->
-        <button id="muteToggleBtn" class="arcade-icon-btn" aria-label="Toggle Sound" title="Toggle Sound (M)" aria-pressed="false">
-          <svg id="soundOnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Theme Picker Button -->
+        <button id="themePickerBtn" class="icon-button" aria-label="Change Theme" title="Theme Selector (T)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+          </svg>
+        </button>
+
+        <!-- Sound Toggle -->
+        <button id="muteToggleBtn" class="icon-button" aria-label="Toggle Sound" title="Toggle Sound (M)" aria-pressed="false">
+          <svg id="soundOnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
-          <svg id="soundOffIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="soundOffIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <line x1="23" y1="9" x2="17" y2="15"></line>
             <line x1="17" y1="9" x2="23" y2="15"></line>
           </svg>
         </button>
 
-        <!-- System Settings -->
-        <button id="openSettingsBtn" class="arcade-icon-btn" aria-label="Open System Settings" title="System Settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Settings Trigger -->
+        <button id="openSettingsBtn" class="icon-button" aria-label="Open Settings" title="Timer Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
         </button>
       </div>
-      <div class="bezel-screw right"></div>
     </header>
 
-    <!-- Main Multi-Panel Cockpit Grid -->
-    <div class="console-dashboard">
-
-      <!-- LEFT AUX WING: 80s Cassette & Ambient Deck -->
-      <aside class="console-panel panel-deck">
-        <div class="panel-header">
-          <span class="panel-tag">AUDIO CASSETTE</span>
-          <span class="tape-type">TYPE II · CrO2</span>
-        </div>
-
-        <!-- Animated Cassette Player Deck -->
-        <div class="cassette-deck">
-          <div class="cassette-window">
-            <div class="tape-spool left" id="spoolLeft">
-              <div class="spool-cog"></div>
-            </div>
-            <div class="tape-bridge">
-              <span class="tape-label" id="tapeLabel">NO TAPE</span>
-            </div>
-            <div class="tape-spool right" id="spoolRight">
-              <div class="spool-cog"></div>
-            </div>
+    <!-- Theme Switcher Drawer Panel -->
+    <div id="themePaletteDrawer" class="theme-drawer glass-card hidden">
+      <div class="theme-drawer-header">
+        <span class="theme-drawer-title">✨ Visual Theme Palette</span>
+        <button id="closeThemeDrawerBtn" class="drawer-close-btn" aria-label="Close theme palette">✕</button>
+      </div>
+      <div class="theme-cards-grid">
+        <button class="theme-option-card active" data-theme="synthwave">
+          <div class="theme-preview-swatch swatch-synthwave">
+            <span class="swatch-sun"></span>
           </div>
-
-          <!-- Stereo VU Meter Graphic -->
-          <div class="vu-meter-bar">
-            <div class="vu-channel">
-              <span class="vu-label">L</span>
-              <div class="vu-leds" id="vuL">
-                <span class="v-led g"></span><span class="v-led g"></span><span class="v-led g"></span>
-                <span class="v-led y"></span><span class="v-led y"></span><span class="v-led r"></span>
-              </div>
-            </div>
-            <div class="vu-channel">
-              <span class="vu-label">R</span>
-              <div class="vu-leds" id="vuR">
-                <span class="v-led g"></span><span class="v-led g"></span><span class="v-led g"></span>
-                <span class="v-led y"></span><span class="v-led y"></span><span class="v-led r"></span>
-              </div>
-            </div>
+          <div class="theme-info">
+            <strong>⚡ 80s Synthwave</strong>
+            <span>Neon sunset horizon</span>
           </div>
-        </div>
-
-        <!-- Tape Tracks / Ambient Sound Selector -->
-        <div class="tape-selector">
-          <span class="selector-title">FOCUS SOUNDSCAPE</span>
-          <div class="ambient-tracks">
-            <button class="track-btn active" data-sound="none">
-              <span class="track-num">00</span>
-              <span class="track-name">SILENCE</span>
-            </button>
-            <button class="track-btn" data-sound="rain">
-              <span class="track-num">01</span>
-              <span class="track-name">NEON RAIN</span>
-            </button>
-            <button class="track-btn" data-sound="brown">
-              <span class="track-num">02</span>
-              <span class="track-name">CYBER DRIFT</span>
-            </button>
-            <button class="track-btn" data-sound="fire">
-              <span class="track-num">03</span>
-              <span class="track-name">RETRO GLOW</span>
-            </button>
+        </button>
+        <button class="theme-option-card" data-theme="cyber">
+          <div class="theme-preview-swatch swatch-cyber"></div>
+          <div class="theme-info">
+            <strong>🌌 Cyber Neon HUD</strong>
+            <span>OLED laser cockpit</span>
           </div>
-        </div>
-      </aside>
+        </button>
+        <button class="theme-option-card" data-theme="lofi">
+          <div class="theme-preview-swatch swatch-lofi"></div>
+          <div class="theme-info">
+            <strong>☕ Cozy Lo-Fi</strong>
+            <span>Warm espresso & craft</span>
+          </div>
+        </button>
+        <button class="theme-option-card" data-theme="sakura">
+          <div class="theme-preview-swatch swatch-sakura"></div>
+          <div class="theme-info">
+            <strong>🌸 Midnight Sakura</strong>
+            <span>Tokyo blossom indigo</span>
+          </div>
+        </button>
+        <button class="theme-option-card" data-theme="nordic">
+          <div class="theme-preview-swatch swatch-nordic"></div>
+          <div class="theme-info">
+            <strong>🌲 Nordic Forest</strong>
+            <span>Alpine pine & arctic mint</span>
+          </div>
+        </button>
+      </div>
+    </div>
 
-      <!-- CENTER STAGE: The CRT Timer Chamber & Action Bay -->
-      <main class="console-panel panel-center">
-        
-        <!-- Mode Rocker Switch Bar -->
-        <nav class="mode-rockers" role="tablist" aria-label="Console Modes">
-          <button class="rocker-btn active" data-mode="focus" id="tabFocus" role="tab" aria-selected="true">
-            <span class="rocker-led"></span>
-            <span class="rocker-text">⚡ FOCUS 25M</span>
-          </button>
-          <button class="rocker-btn" data-mode="shortBreak" id="tabShortBreak" role="tab" aria-selected="false">
-            <span class="rocker-led"></span>
-            <span class="rocker-text">☕ BREAK 05M</span>
-          </button>
-          <button class="rocker-btn" data-mode="longBreak" id="tabLongBreak" role="tab" aria-selected="false">
-            <span class="rocker-led"></span>
-            <span class="rocker-text">🌴 CRUISE 15M</span>
-          </button>
-        </nav>
+    <!-- Main Content Area -->
+    <main class="main-card glass-card">
+      <!-- Mode Selection Tabs -->
+      <nav class="mode-tabs" role="tablist" aria-label="Timer Modes">
+        <button class="mode-tab active" data-mode="focus" id="tabFocus" role="tab" aria-selected="true">
+          <span class="mode-icon">⚡</span> Focus (25m)
+        </button>
+        <button class="mode-tab" data-mode="shortBreak" id="tabShortBreak" role="tab" aria-selected="false">
+          <span class="mode-icon">☕</span> Short Break (5m)
+        </button>
+        <button class="mode-tab" data-mode="longBreak" id="tabLongBreak" role="tab" aria-selected="false">
+          <span class="mode-icon">🌴</span> Long Break (15m)
+        </button>
+      </nav>
 
-        <!-- Main CRT Monitor Screen -->
-        <div class="crt-screen">
-          <div class="crt-glare"></div>
-          
-          <!-- Tachometer Circular SVG Progress Ring -->
-          <div class="tachometer-wrap">
-            <svg class="tachometer-svg" viewBox="0 0 340 340" width="340" height="340">
-              <defs>
-                <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" class="neon-stop-1" />
-                  <stop offset="100%" class="neon-stop-2" />
-                </linearGradient>
-                <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur stdDeviation="6" result="blur1" />
-                  <feGaussianBlur stdDeviation="12" result="blur2" />
-                  <feMerge>
-                    <feMergeNode in="blur2" />
-                    <feMergeNode in="blur1" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              <!-- Outer Ticks Gauge Dial -->
-              <circle class="gauge-ticks" cx="170" cy="170" r="156" fill="transparent" stroke-width="4"></circle>
-              <!-- Track Circle -->
-              <circle class="gauge-track" cx="170" cy="170" r="138" stroke-width="12" fill="transparent"></circle>
-              <!-- Radiant Progress Arc -->
-              <circle id="progressCircle" class="gauge-progress" cx="170" cy="170" r="138" stroke-width="12" fill="transparent" stroke="url(#neonGradient)" filter="url(#laserGlow)"></circle>
-            </svg>
+      <!-- Timer Section -->
+      <section class="timer-section" aria-label="Timer Display">
+        <div class="timer-circle-container">
+          <!-- SVG Radial Progress Ring -->
+          <svg class="progress-ring" viewBox="0 0 320 320" width="320" height="320">
+            <defs>
+              <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" class="gradient-stop-1" />
+                <stop offset="100%" class="gradient-stop-2" />
+              </linearGradient>
+              <filter id="glowEffect" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="8" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <!-- Secondary outer aura ring filter -->
+              <filter id="auraGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="14" />
+              </filter>
+            </defs>
+            <!-- Background Track -->
+            <circle class="progress-ring__track" cx="160" cy="160" r="140" stroke-width="12" fill="transparent"></circle>
+            <!-- Diffuse Glow Halo -->
+            <circle class="progress-ring__halo" cx="160" cy="160" r="140" stroke-width="14" fill="transparent" stroke="url(#timerGradient)" filter="url(#auraGlow)"></circle>
+            <!-- Animated Progress Indicator -->
+            <circle id="progressCircle" class="progress-ring__indicator" cx="160" cy="160" r="140" stroke-width="12" fill="transparent" stroke="url(#timerGradient)" filter="url(#glowEffect)"></circle>
+          </svg>
 
-            <!-- Digital Screen Center Info -->
-            <div class="crt-center-content">
-              <div class="mission-tag" id="sessionBadge">
-                <span class="blink-dot"></span>
-                <span id="sessionBadgeText">ROUND 01 / 04</span>
-              </div>
+          <!-- Inside Ring Content -->
+          <div class="timer-inner-content">
+            <div class="session-badge" id="sessionBadge">
+              <span class="pulse-dot"></span>
+              <span id="sessionBadgeText">Focus Session #1</span>
+            </div>
 
-              <!-- Large 25:00 Digital Countdown Display -->
-              <div class="digital-clock" id="timeDisplay" role="timer" aria-live="polite">25:00</div>
+            <!-- Large 25-minute Countdown Display -->
+            <div class="countdown-display" id="timeDisplay" role="timer" aria-live="polite">25:00</div>
 
-              <div class="crt-tagline" id="timerTagline">CHANNEL SYNTHWAVE MOMENTUM</div>
+            <p class="timer-tagline" id="timerTagline">Locked in. Channel the synthwave momentum.</p>
 
-              <!-- Quick Time Trim Buttons -->
-              <div class="quick-trim-cluster">
-                <button id="minus5MinBtn" class="btn-trim" title="Minus 5 Minutes" aria-label="Minus 5 Minutes">-5m</button>
-                <button id="minusMinuteBtn" class="btn-trim" title="Minus 1 Minute" aria-label="Minus 1 Minute">-1m</button>
-                <span class="trim-sep"></span>
-                <button id="plusMinuteBtn" class="btn-trim" title="Plus 1 Minute" aria-label="Plus 1 Minute">+1m</button>
-                <button id="plus5MinBtn" class="btn-trim" title="Plus 5 Minutes" aria-label="Plus 5 Minutes">+5m</button>
-              </div>
+            <!-- Quick Adjust Buttons -->
+            <div class="quick-adjust-bar">
+              <button id="minusMinuteBtn" class="btn-micro" title="Subtract 1 minute" aria-label="Subtract 1 minute">-1m</button>
+              <span class="quick-adjust-divider"></span>
+              <button id="plusMinuteBtn" class="btn-micro" title="Add 1 minute" aria-label="Add 1 minute">+1m</button>
             </div>
           </div>
         </div>
 
-        <!-- Heavy Duty Arcade Action Buttons -->
-        <div class="action-bay">
+        <!-- Primary Action Controls -->
+        <div class="controls-row">
           <!-- Reset Button -->
-          <button id="resetBtn" class="arcade-push-btn btn-amber" title="Reset (R)" aria-label="Reset Timer">
-            <div class="btn-face">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                <path d="M3 3v5h5"></path>
-              </svg>
-              <span>RESET</span>
-            </div>
-          </button>
-
-          <!-- Master Ignition / Pause Pushbutton -->
-          <button id="startPauseBtn" class="arcade-push-btn btn-ignition" title="Start / Pause (Space)" aria-label="Start or Pause Timer">
-            <div class="btn-face">
-              <div class="ignition-icon" id="startPauseIcon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-              </div>
-              <span id="startPauseText">IGNITION</span>
-            </div>
-          </button>
-
-          <!-- Warp Skip Button -->
-          <button id="skipBtn" class="arcade-push-btn btn-cyan" title="Skip Phase (S)" aria-label="Skip to Next Phase">
-            <div class="btn-face">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="5 4 15 12 5 20 5 4"></polygon>
-                <line x1="19" y1="5" x2="19" y2="19"></line>
-              </svg>
-              <span>SKIP</span>
-            </div>
-          </button>
-        </div>
-      </main>
-
-      <!-- RIGHT AUX WING: Arcade Scoreboard & Diagnostics -->
-      <aside class="console-panel panel-score">
-        <div class="panel-header">
-          <span class="panel-tag">HIGH SCORE HUD</span>
-          <span class="tape-type">TOP 1P</span>
-        </div>
-
-        <!-- Arcade Score Readouts -->
-        <div class="score-readouts">
-          <div class="score-box">
-            <span class="score-title">XP SCORE</span>
-            <div class="score-digits" id="statScore">000000</div>
-          </div>
-
-          <div class="stats-row-duo">
-            <div class="score-subcard">
-              <span class="sub-label">SESSIONS</span>
-              <span class="sub-value" id="statCompletedSessions">0</span>
-            </div>
-            <div class="score-subcard">
-              <span class="sub-label">FOCUS MINS</span>
-              <span class="sub-value" id="statTotalMinutes">0</span>
-            </div>
-          </div>
-
-          <!-- Power / Combo Level Meter -->
-          <div class="power-level-meter">
-            <div class="power-label-row">
-              <span>ROUND CYCLE</span>
-              <span id="statCycleProgress">1 / 4</span>
-            </div>
-            <div class="meter-bar-track">
-              <div class="meter-bar-fill" id="meterFill" style="width: 25%;"></div>
-            </div>
-          </div>
-
-          <!-- Reset All Stats Button -->
-          <button id="resetStatsBtn" class="btn-retro-reset" title="Reset XP Score, Sessions & Round Cycle" aria-label="Reset All Stats">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <button id="resetBtn" class="control-btn btn-secondary" title="Reset Timer (R)" aria-label="Reset Timer">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
               <path d="M3 3v5h5"></path>
             </svg>
-            <span>RESET SCORE & CYCLE</span>
+            <span>Reset</span>
+          </button>
+
+          <!-- Main Start/Pause Button -->
+          <button id="startPauseBtn" class="control-btn btn-primary" title="Start Timer (Space)" aria-label="Start or Pause Timer">
+            <div class="btn-icon-wrap" id="startPauseIcon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            <span id="startPauseText">Start Focus</span>
+          </button>
+
+          <!-- Skip / Next Phase Button -->
+          <button id="skipBtn" class="control-btn btn-secondary" title="Skip to Next Phase (S)" aria-label="Skip to Next Phase">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+            <span>Skip</span>
           </button>
         </div>
+      </section>
 
-        <!-- Retro Keyboard Flight Controls Map -->
-        <div class="flight-controls-guide">
-          <span class="guide-title">CONTROL COMMANDS</span>
-          <div class="keys-grid">
-            <div class="key-item"><kbd>SPACE</kbd> <span>IGNITION</span></div>
-            <div class="key-item"><kbd>R</kbd> <span>RESET</span></div>
-            <div class="key-item"><kbd>S</kbd> <span>WARP SKIP</span></div>
-            <div class="key-item"><kbd>M</kbd> <span>MUTE SFX</span></div>
-          </div>
+      <!-- Ambient Audio Bar -->
+      <section class="ambient-sound-bar">
+        <div class="ambient-label">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+          <span>Synth Ambient:</span>
         </div>
-      </aside>
+        <div class="ambient-chips">
+          <button class="ambient-chip active" data-sound="none">Off</button>
+          <button class="ambient-chip" data-sound="rain">🌧️ Neon Rain</button>
+          <button class="ambient-chip" data-sound="brown">🌌 Deep Horizon</button>
+          <button class="ambient-chip" data-sound="fire">🪵 Retro Glow</button>
+        </div>
+      </section>
+    </main>
 
-    </div>
+    <!-- Productivity Stats & Shortcuts Bar -->
+    <footer class="app-footer glass-card">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-num" id="statCompletedSessions">0</span>
+          <span class="stat-desc">Sessions Today</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="statTotalMinutes">0</span>
+          <span class="stat-desc">Focus Minutes</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="statCycleProgress">1/4</span>
+          <span class="stat-desc">Cycle Round</span>
+        </div>
+      </div>
 
-    <!-- Bottom Chassis Plate -->
-    <footer class="console-footer-plate">
-      <div class="footer-dot"></div>
-      <span class="footer-serial">TURBO-HYPER-DRIVE 1984 EDITION // HIGH RESOLUTION VECTOR CHIPS</span>
-      <div class="footer-dot"></div>
+      <div class="keyboard-hints">
+        <span class="hint"><kbd>Space</kbd> Start/Pause</span>
+        <span class="hint"><kbd>R</kbd> Reset</span>
+        <span class="hint"><kbd>S</kbd> Skip</span>
+        <span class="hint"><kbd>M</kbd> Mute</span>
+        <span class="hint"><kbd>T</kbd> Theme</span>
+      </div>
     </footer>
   </div>
 
-  <!-- CRT System Configuration Modal (Terminal Style) -->
-  <dialog id="settingsModal" class="retro-modal">
-    <div class="modal-terminal-bezel">
-      <div class="terminal-header">
-        <span class="terminal-title">⚙️ SYSTEM CONFIGURATION // BIOS v2.4</span>
-        <button id="closeSettingsBtn" class="terminal-close" aria-label="Close Settings">✕</button>
+  <!-- Settings Modal Drawer -->
+  <dialog id="settingsModal" class="modal-dialog glass-card">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        FocusPulse Settings
+      </h2>
+      <button id="closeSettingsBtn" class="icon-button" aria-label="Close Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form id="settingsForm" class="modal-body" method="dialog">
+      <!-- Theme Selection inside settings too -->
+      <div class="settings-group">
+        <label class="settings-group-title" for="settingsThemeSelect">Visual Aesthetic Theme</label>
+        <select id="settingsThemeSelect" class="styled-select">
+          <option value="synthwave">⚡ 80s Retro Synthwave (Neon Sunset)</option>
+          <option value="cyber">🌌 Cyber Neon HUD (OLED Laser)</option>
+          <option value="lofi">☕ Cozy Lo-Fi Coffeehouse (Warm Terracotta)</option>
+          <option value="sakura">🌸 Midnight Sakura (Tokyo Blossom)</option>
+          <option value="nordic">🌲 Nordic Forest (Alpine Pine)</option>
+        </select>
       </div>
 
-      <form id="settingsForm" class="terminal-body" method="dialog">
-        <!-- Interval Durations -->
-        <fieldset class="terminal-group">
-          <legend class="group-legend">[ INTERVAL PROGRAMMING (MINUTES) ]</legend>
-          <div class="terminal-inputs-grid">
-            <div class="t-field">
-              <label for="inputFocus">FOCUS</label>
-              <input type="number" id="inputFocus" min="1" max="120" value="25">
-            </div>
-            <div class="t-field">
-              <label for="inputShortBreak">PIT STOP</label>
-              <input type="number" id="inputShortBreak" min="1" max="60" value="5">
-            </div>
-            <div class="t-field">
-              <label for="inputLongBreak">CRUISE</label>
-              <input type="number" id="inputLongBreak" min="1" max="60" value="15">
-            </div>
+      <!-- Time Configuration -->
+      <div class="settings-group">
+        <label class="settings-group-title">Interval Durations (minutes)</label>
+        <div class="inputs-row">
+          <div class="input-field">
+            <label for="inputFocus">Focus</label>
+            <input type="number" id="inputFocus" min="1" max="120" value="25">
           </div>
-        </fieldset>
-
-        <!-- Sound Synthesizer Config -->
-        <fieldset class="terminal-group">
-          <legend class="group-legend">[ 80s CHIME SYNTHESIZER ]</legend>
-          <div class="t-sound-row">
-            <select id="soundSelect" class="retro-select">
-              <option value="synth">⚡ 1984 Polyphonic Synth Brass</option>
-              <option value="bell">🔔 Crystal FM Bell</option>
-              <option value="marimba">🎵 Arcade Marimba Arpeggio</option>
-              <option value="bowl">🧘 Zen Cosmic Resonance</option>
-              <option value="sparkle">✨ Laser Beam Sparkle</option>
-            </select>
-            <button type="button" id="previewSoundBtn" class="arcade-push-btn btn-secondary btn-sm">
-              <div class="btn-face">TEST SFX</div>
-            </button>
+          <div class="input-field">
+            <label for="inputShortBreak">Short Break</label>
+            <input type="number" id="inputShortBreak" min="1" max="60" value="5">
           </div>
-        </fieldset>
-
-        <!-- Volume Master -->
-        <fieldset class="terminal-group">
-          <legend class="group-legend">[ MASTER OUTPUT GAIN ]</legend>
-          <div class="slider-box">
-            <input type="range" id="volumeSlider" min="0" max="100" value="80" class="retro-slider">
-            <span class="slider-pct" id="volumeValue">80%</span>
+          <div class="input-field">
+            <label for="inputLongBreak">Long Break</label>
+            <input type="number" id="inputLongBreak" min="1" max="60" value="15">
           </div>
-        </fieldset>
+        </div>
+      </div>
 
-        <!-- Automation Switches -->
-        <fieldset class="terminal-group">
-          <legend class="group-legend">[ AUTO SEQUENCE ENGINES ]</legend>
-          <label class="retro-checkbox-row">
-            <input type="checkbox" id="autoStartBreaks">
-            <span>Auto-engage Breaks after Focus</span>
-          </label>
-          <label class="retro-checkbox-row">
-            <input type="checkbox" id="autoStartPomodoros">
-            <span>Auto-engage Focus after Breaks</span>
-          </label>
-        </fieldset>
-
-        <div class="terminal-actions">
-          <button type="button" id="resetDefaultsBtn" class="btn-link">RESET DEFAULTS</button>
-          <button type="submit" class="arcade-push-btn btn-ignition btn-sm">
-            <div class="btn-face">SAVE MATRIX</div>
+      <!-- Sound Configuration -->
+      <div class="settings-group">
+        <label class="settings-group-title" for="soundSelect">Completion Chime Sound</label>
+        <div class="sound-select-row">
+          <select id="soundSelect" class="styled-select">
+            <option value="synth">⚡ Synthwave Chime (80s Polyphonic)</option>
+            <option value="bell">🔔 Crystal Chime</option>
+            <option value="marimba">🎵 Uplifting Marimba</option>
+            <option value="bowl">🧘 Zen Singing Bowl</option>
+            <option value="sparkle">✨ Harmonic Sparkle</option>
+          </select>
+          <button type="button" id="previewSoundBtn" class="btn-secondary btn-sm" title="Preview Sound">
+            🔊 Test
           </button>
         </div>
-      </form>
-    </div>
+      </div>
+
+      <!-- Sound Volume -->
+      <div class="settings-group">
+        <div class="slider-label-row">
+          <label for="volumeSlider">Alarm & Ambient Volume</label>
+          <span id="volumeValue">80%</span>
+        </div>
+        <input type="range" id="volumeSlider" min="0" max="100" value="80" class="styled-range">
+      </div>
+
+      <!-- Automation -->
+      <div class="settings-group">
+        <label class="settings-group-title">Automation</label>
+        <label class="toggle-row">
+          <span>Auto-start Breaks</span>
+          <input type="checkbox" id="autoStartBreaks" class="styled-switch">
+        </label>
+        <label class="toggle-row">
+          <span>Auto-start Pomodoros</span>
+          <input type="checkbox" id="autoStartPomodoros" class="styled-switch">
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="resetDefaultsBtn" class="btn-text">Reset Defaults</button>
+        <button type="submit" class="btn-primary btn-sm">Save Changes</button>
+      </div>
+    </form>
   </dialog>
 
-  <!-- Complete Alert Toast / HUD Banner -->
+  <!-- Complete Notification Toast / Banner Overlay -->
   <div id="toastNotification" class="toast-banner hidden" role="status" aria-live="assertive">
     <div class="toast-content">
       <span class="toast-emoji" id="toastEmoji">⚡</span>
       <div class="toast-text">
-        <strong id="toastTitle">FOCUS SESSION COMPLETE!</strong>
-        <p id="toastMessage">Great run. Recharge in the Pit Stop.</p>
+        <strong id="toastTitle">Focus Session Completed!</strong>
+        <p id="toastMessage">Great momentum! Time for a well-deserved break.</p>
       </div>
-      <button id="toastCloseBtn" class="toast-close" aria-label="Dismiss">✕</button>
+      <button id="toastCloseBtn" class="toast-close" aria-label="Dismiss Notification">✕</button>
     </div>
   </div>
 

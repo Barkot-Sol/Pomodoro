@@ -1,6 +1,6 @@
 /**
- * SYNTH·PULSE // 1984 Retro Arcade Pomodoro Console
- * Drift-free countdown engine, 80s Web Audio synthesizers, cassette deck animations, and arcade HUD scoring.
+ * FocusPulse — Modern Pomodoro Timer (80s Retro Synthwave Multi-Theme Edition)
+ * High-precision timer, Unified Web Audio API synthesizer, Theme Manager, and Ambient Sounds.
  */
 
 // =============================================================================
@@ -8,11 +8,13 @@
 // =============================================================================
 
 const STORAGE_KEYS = {
-  SETTINGS: 'synthpulse_settings_v4',
-  STATS: 'synthpulse_stats_v4',
+  SETTINGS: 'focuspulse_settings_v2',
+  STATS: 'focuspulse_stats_v2',
+  THEME: 'focuspulse_theme_v2',
 };
 
 const DEFAULT_SETTINGS = {
+  theme: 'synthwave',      // synthwave | cyber | lofi | sakura | nordic
   focusDuration: 25,       // minutes
   shortBreakDuration: 5,   // minutes
   longBreakDuration: 15,   // minutes
@@ -30,9 +32,9 @@ let timerState = {
   isRunning: false,
   remainingSeconds: 25 * 60,
   totalDurationSeconds: 25 * 60,
-  cycleCount: 1,          // 1, 2, 3, 4 (Rounds)
+  cycleCount: 1,          // 1, 2, 3, 4 (Pomodoro rounds)
   intervalId: null,
-  targetTimestamp: null,  // Drift-free precision
+  targetTimestamp: null,  // For drift-free precision
 };
 
 let stats = {
@@ -42,19 +44,14 @@ let stats = {
 };
 
 // =============================================================================
-// 80s Web Audio API Engine
+// Unified Web Audio API Engine
 // =============================================================================
 
 let audioCtx = null;
 let masterGainNode = null;
 let ambientSource = null;
 let ambientGainNode = null;
-let ambientOsc1 = null;
-let ambientOsc2 = null;
-let ambientSubOsc = null;
-let ambientLFO = null;
 let currentAmbientSound = 'none';
-let vuIntervalId = null;
 
 function initAudioContext() {
   if (!audioCtx) {
@@ -86,10 +83,10 @@ function playUnmuteFeedback() {
   const gain = audioCtx.createGain();
   
   osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(440, now); // A4
+  osc.frequency.setValueAtTime(587.33, now); // D5
   osc.frequency.exponentialRampToValueAtTime(880, now + 0.08); // A5
 
-  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.setValueAtTime(0.2, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
   osc.connect(gain);
@@ -100,7 +97,7 @@ function playUnmuteFeedback() {
 }
 
 /**
- * Synthesize 80s polyphonic arcade/synth notification chimes
+ * Synthesize musical notification chimes
  */
 function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
   initAudioContext();
@@ -119,7 +116,7 @@ function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
 
   switch (theme) {
     case 'synth':
-      // ⚡ 1984 Polyphonic Synth Brass Fanfare (D4, F#4, A4, D5)
+      // ⚡ 80s Synthwave Polyphonic Brass / Chord (D4, F#4, A4, D5)
       [293.66, 369.99, 440.00, 587.33].forEach((freq, index) => {
         const osc = audioCtx.createOscillator();
         const filter = audioCtx.createBiquadFilter();
@@ -129,10 +126,11 @@ function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(freq, noteStart);
 
+        // Lowpass sweep for 80s synth character
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(700, noteStart);
-        filter.frequency.exponentialRampToValueAtTime(3600, noteStart + 0.15);
-        filter.frequency.exponentialRampToValueAtTime(600, noteStart + 1.3);
+        filter.frequency.setValueAtTime(800, noteStart);
+        filter.frequency.exponentialRampToValueAtTime(3200, noteStart + 0.15);
+        filter.frequency.exponentialRampToValueAtTime(600, noteStart + 1.2);
 
         gain.gain.setValueAtTime(0, noteStart);
         gain.gain.linearRampToValueAtTime(0.5, noteStart + 0.04);
@@ -170,7 +168,7 @@ function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
       break;
 
     case 'bowl':
-      // Cosmic Singing Bowl
+      // Tibetan singing bowl
       [220, 440, 660, 1100].forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -192,7 +190,7 @@ function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
       break;
 
     case 'sparkle':
-      // Laser Sparkle
+      // Ascending crystalline sparkle
       [880, 1108.73, 1318.51, 1760, 2093].forEach((freq, index) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -215,7 +213,7 @@ function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
 
     case 'bell':
     default:
-      // Crystal FM Bell (F6, A6, C7)
+      // Crystal 3-Tone chime (F6, A6, C7)
       [1396.91, 1760.00, 2093.00].forEach((freq, index) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -238,219 +236,211 @@ function playAlarmSound(theme = settings.soundTheme, forcePlay = false) {
   }
 }
 
-/**
- * Stop any active ambient audio generators
- */
-function cleanupAmbientNodes() {
-  if (ambientSource) {
-    try { ambientSource.stop(); ambientSource.disconnect(); } catch (e) {}
-    ambientSource = null;
+let ambientNodes = [];
+
+function stopAmbientSound() {
+  if (ambientNodes.length > 0) {
+    ambientNodes.forEach(node => {
+      try {
+        if (node.stop) node.stop();
+        if (node.disconnect) node.disconnect();
+      } catch (e) {
+        // Ignore
+      }
+    });
+    ambientNodes = [];
   }
-  if (ambientOsc1) {
-    try { ambientOsc1.stop(); ambientOsc1.disconnect(); } catch (e) {}
-    ambientOsc1 = null;
-  }
-  if (ambientOsc2) {
-    try { ambientOsc2.stop(); ambientOsc2.disconnect(); } catch (e) {}
-    ambientOsc2 = null;
-  }
-  if (ambientSubOsc) {
-    try { ambientSubOsc.stop(); ambientSubOsc.disconnect(); } catch (e) {}
-    ambientSubOsc = null;
-  }
-  if (ambientLFO) {
-    try { ambientLFO.stop(); ambientLFO.disconnect(); } catch (e) {}
-    ambientLFO = null;
-  }
+  ambientSource = null;
+  ambientGainNode = null;
 }
 
 /**
- * Ambient focus soundscape generator (Audible & Authentic 80s Soundscapes)
+ * Ambient focus sound generators:
+ * - 'rain': 🌧️ Neon Rain (multiband pink rain with soft droplet taps)
+ * - 'brown': 🌌 Deep Horizon (cinematic cosmic synth drone + warm resonant brown noise)
+ * - 'fire': 🪵 Retro Glow (realistic crackling campfire with pops, flame body & warm embers)
  */
 function setAmbientSound(type) {
   currentAmbientSound = type;
-  cleanupAmbientNodes();
+  stopAmbientSound();
 
-  // Update cassette tape UI
-  const tapeNames = {
-    none: 'NO TAPE',
-    rain: 'SIDE A · NEON RAIN',
-    brown: 'SIDE A · CYBER DRIFT',
-    fire: 'SIDE A · RETRO GLOW',
-  };
-  elements.tapeLabel.textContent = tapeNames[type] || 'NO TAPE';
-  const isTapeActive = type !== 'none';
-  elements.spoolLeft.classList.toggle('spinning', isTapeActive);
-  elements.spoolRight.classList.toggle('spinning', isTapeActive);
-
-  if (type === 'none') {
-    stopVUMeter();
-    return;
-  }
-
+  if (type === 'none') return;
   initAudioContext();
   if (!audioCtx || !masterGainNode) return;
 
-  const now = audioCtx.currentTime;
+  const sampleRate = audioCtx.sampleRate;
+  const duration = 4; // 4 seconds buffer for seamless rich textures
+  const bufferSize = sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
+  const data = buffer.getChannelData(0);
+
   ambientGainNode = audioCtx.createGain();
-  ambientGainNode.gain.setValueAtTime(0.32, now);
   ambientGainNode.connect(masterGainNode);
 
   if (type === 'rain') {
-    // 🌧️ NEON RAIN: Rich Pink Noise Rainfall with Lowpass Modulation
-    const bufferSize = audioCtx.sampleRate * 2;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0;
+    // 🌧️ Neon Rain: Multiband pink noise with scattered raindrop taps
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
       b0 = 0.99886 * b0 + white * 0.0555179;
       b1 = 0.99332 * b1 + white * 0.0750759;
       b2 = 0.96900 * b2 + white * 0.1538520;
       b3 = 0.86650 * b3 + white * 0.3104856;
-      data[i] = (b0 + b1 + b2 + b3) * 0.28;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.14;
+      b6 = white * 0.115926;
     }
-    const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
-    noise.loop = true;
 
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1100;
-
-    noise.connect(filter);
-    filter.connect(ambientGainNode);
-    noise.start(now);
-    ambientSource = noise;
-
-  } else if (type === 'brown') {
-    // 🌌 CYBER DRIFT: 80s Cosmic Analog Synth Drone (D2 + A2 + Sub Bass + LFO sweep)
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const subOsc = audioCtx.createOscillator();
-
-    osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(73.42, now); // D2
-
-    osc2.type = 'sawtooth';
-    osc2.frequency.setValueAtTime(110.00, now); // A2 (fifth)
-    osc2.detune.setValueAtTime(8, now); // Chorus detune
-
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(36.71, now); // Sub D1
-
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(450, now);
-    filter.Q.setValueAtTime(4, now);
-
-    // LFO to sweep synth filter
-    const lfo = audioCtx.createOscillator();
-    const lfoGain = audioCtx.createGain();
-    lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(0.18, now); // Slow 0.18 Hz sweep
-    lfoGain.gain.setValueAtTime(220, now);
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-    lfo.start(now);
-
-    const droneGain = audioCtx.createGain();
-    droneGain.gain.setValueAtTime(0.28, now);
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    subOsc.connect(filter);
-    filter.connect(droneGain);
-    droneGain.connect(ambientGainNode);
-
-    osc1.start(now);
-    osc2.start(now);
-    subOsc.start(now);
-
-    ambientOsc1 = osc1;
-    ambientOsc2 = osc2;
-    ambientSubOsc = subOsc;
-    ambientLFO = lfo;
-
-  } else if (type === 'fire') {
-    // 🪵 RETRO GLOW: Warm Vinyl Crackle + Analog Vacuum Tube Tone
-    const bufferSize = audioCtx.sampleRate * 2;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for (let i = 0; i < bufferSize; i++) {
-      const isPop = Math.random() < 0.001;
-      const isCrackle = Math.random() < 0.012;
-      if (isPop) {
-        data[i] = (Math.random() * 2 - 1) * 0.95;
-      } else if (isCrackle) {
-        data[i] = (Math.random() * 2 - 1) * 0.45;
-      } else {
-        data[i] = (Math.random() * 2 - 1) * 0.07;
+    // Add gentle random droplet impulses
+    const dropCount = duration * 45;
+    for (let d = 0; d < dropCount; d++) {
+      const pos = Math.floor(Math.random() * (bufferSize - 400));
+      const dropAmp = (Math.random() * 0.15 + 0.05);
+      const dropFreq = 0.08 + Math.random() * 0.08;
+      for (let j = 0; j < 350; j++) {
+        data[pos + j] += Math.sin(j * dropFreq) * Math.exp(-j / 60) * dropAmp;
       }
     }
 
-    const noise = audioCtx.createBufferSource();
-    noise.buffer = buffer;
-    noise.loop = true;
+    applyBufferCrossfade(data, sampleRate, bufferSize);
+
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
 
     const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1600;
-    filter.Q.value = 1.0;
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
 
-    // 55Hz Warm analog transformer hum
-    const humOsc = audioCtx.createOscillator();
-    const humGain = audioCtx.createGain();
-    humOsc.type = 'triangle';
-    humOsc.frequency.setValueAtTime(55, now);
-    humGain.gain.setValueAtTime(0.12, now);
+    noiseSource.connect(filter);
+    filter.connect(ambientGainNode);
+    ambientGainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
 
-    noise.connect(filter);
+    noiseSource.start();
+    ambientNodes.push(noiseSource, filter, ambientGainNode);
+    ambientSource = noiseSource;
+
+  } else if (type === 'brown') {
+    // 🌌 Deep Horizon: Cinematic analog cosmic drone + resonant deep brownian atmosphere
+    let last = 0.0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + (0.04 * white)) / 1.025;
+      data[i] = last * 2.2;
+    }
+
+    applyBufferCrossfade(data, sampleRate, bufferSize);
+
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(520, audioCtx.currentTime);
+    filter.Q.setValueAtTime(1.8, audioCtx.currentTime);
+
+    noiseSource.connect(filter);
     filter.connect(ambientGainNode);
 
-    humOsc.connect(humGain);
-    humGain.connect(ambientGainNode);
+    // Warm sub-drone oscillators (C2 = 65.41Hz & G2 = 98.00Hz) for deep soothing presence
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const oscGain = audioCtx.createGain();
 
-    noise.start(now);
-    humOsc.start(now);
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(65.41, audioCtx.currentTime);
 
-    ambientSource = noise;
-    ambientOsc1 = humOsc;
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(98.00, audioCtx.currentTime);
+
+    oscGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+
+    // Subtle slow cosmic pulse
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lfo.frequency.setValueAtTime(0.08, audioCtx.currentTime);
+    lfoGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscGain.gain);
+
+    osc1.connect(oscGain);
+    osc2.connect(oscGain);
+    oscGain.connect(ambientGainNode);
+
+    ambientGainNode.gain.setValueAtTime(0.38, audioCtx.currentTime);
+
+    const now = audioCtx.currentTime;
+    noiseSource.start(now);
+    osc1.start(now);
+    osc2.start(now);
+    lfo.start(now);
+
+    ambientNodes.push(noiseSource, filter, osc1, osc2, oscGain, lfo, lfoGain, ambientGainNode);
+    ambientSource = noiseSource;
+
+  } else if (type === 'fire') {
+    // 🪵 Retro Glow: Warm crackling campfire / vintage glowing embers
+    // Base layer: warm low-frequency flame air
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.997 * b0 + white * 0.05;
+      b1 = 0.985 * b1 + white * 0.08;
+      b2 = 0.950 * b2 + white * 0.15;
+      data[i] = (b0 + b1 + b2) * 0.08;
+    }
+
+    // Crackles and distinct wood snapping pops
+    const popCount = duration * 35;
+    for (let p = 0; p < popCount; p++) {
+      const pos = Math.floor(Math.random() * (bufferSize - 800));
+      const popAmp = (Math.random() * 0.65 + 0.25);
+      const popFreq = 0.15 + Math.random() * 0.45; // 1kHz to 3kHz crackle tone
+      const decay = 25 + Math.random() * 60;
+      for (let j = 0; j < 600; j++) {
+        data[pos + j] += (Math.sin(j * popFreq) + (Math.random() * 0.4 - 0.2)) * Math.exp(-j / decay) * popAmp;
+      }
+    }
+
+    // Micro-embers and sizzle
+    for (let i = 0; i < bufferSize; i++) {
+      if (Math.random() < 0.008) {
+        data[i] += (Math.random() * 0.3 - 0.15);
+      }
+    }
+
+    applyBufferCrossfade(data, sampleRate, bufferSize);
+
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(3200, audioCtx.currentTime);
+
+    noiseSource.connect(filter);
+    filter.connect(ambientGainNode);
+    ambientGainNode.gain.setValueAtTime(0.42, audioCtx.currentTime);
+
+    noiseSource.start();
+    ambientNodes.push(noiseSource, filter, ambientGainNode);
+    ambientSource = noiseSource;
   }
-
-  startVUMeter();
 }
 
 /**
- * Animated Stereo VU Meters
+ * Smooth crossfade at buffer loop boundaries to eliminate clicks
  */
-function startVUMeter() {
-  if (vuIntervalId) return;
-  const ledsL = elements.vuL.querySelectorAll('.v-led');
-  const ledsR = elements.vuR.querySelectorAll('.v-led');
-
-  vuIntervalId = setInterval(() => {
-    if (currentAmbientSound === 'none' && !timerState.isRunning) {
-      stopVUMeter();
-      return;
-    }
-    const levelL = Math.floor(Math.random() * (ledsL.length + 1));
-    const levelR = Math.floor(Math.random() * (ledsR.length + 1));
-
-    ledsL.forEach((led, i) => led.classList.toggle('lit', i < levelL));
-    ledsR.forEach((led, i) => led.classList.toggle('lit', i < levelR));
-  }, 110);
-}
-
-function stopVUMeter() {
-  if (vuIntervalId) {
-    clearInterval(vuIntervalId);
-    vuIntervalId = null;
+function applyBufferCrossfade(data, sampleRate, bufferSize) {
+  const fadeSamples = Math.floor(sampleRate * 0.06);
+  for (let i = 0; i < fadeSamples; i++) {
+    const ratio = i / fadeSamples;
+    data[i] = data[i] * ratio + data[bufferSize - fadeSamples + i] * (1 - ratio);
+    data[bufferSize - fadeSamples + i] = data[i];
   }
-  elements.vuL.querySelectorAll('.v-led').forEach(l => l.classList.remove('lit'));
-  elements.vuR.querySelectorAll('.v-led').forEach(l => l.classList.remove('lit'));
 }
 
 // =============================================================================
@@ -468,33 +458,30 @@ const elements = {
   skipBtn: document.getElementById('skipBtn'),
   plusMinuteBtn: document.getElementById('plusMinuteBtn'),
   minusMinuteBtn: document.getElementById('minusMinuteBtn'),
-  plus5MinBtn: document.getElementById('plus5MinBtn'),
-  minus5MinBtn: document.getElementById('minus5MinBtn'),
   sessionBadgeText: document.getElementById('sessionBadgeText'),
   timerTagline: document.getElementById('timerTagline'),
 
-  // Mode Rockers
+  // Tabs
   tabFocus: document.getElementById('tabFocus'),
   tabShortBreak: document.getElementById('tabShortBreak'),
   tabLongBreak: document.getElementById('tabLongBreak'),
-  modeTabs: document.querySelectorAll('.rocker-btn'),
+  modeTabs: document.querySelectorAll('.mode-tab'),
 
-  // Cassette & VU
-  spoolLeft: document.getElementById('spoolLeft'),
-  spoolRight: document.getElementById('spoolRight'),
-  tapeLabel: document.getElementById('tapeLabel'),
-  vuL: document.getElementById('vuL'),
-  vuR: document.getElementById('vuR'),
-  ambientTracks: document.querySelectorAll('.track-btn'),
+  // Ambient Chips
+  ambientChips: document.querySelectorAll('.ambient-chip'),
 
-  // Stats, HUD Score & Reset
-  statScore: document.getElementById('statScore'),
+  // Header & Stats
+  headerPomoCount: document.getElementById('headerPomoCount'),
   statCompletedSessions: document.getElementById('statCompletedSessions'),
   statTotalMinutes: document.getElementById('statTotalMinutes'),
   statCycleProgress: document.getElementById('statCycleProgress'),
-  meterFill: document.getElementById('meterFill'),
-  ledRec: document.getElementById('ledRec'),
-  resetStatsBtn: document.getElementById('resetStatsBtn'),
+
+  // Theme Picker
+  themePickerBtn: document.getElementById('themePickerBtn'),
+  themePaletteDrawer: document.getElementById('themePaletteDrawer'),
+  closeThemeDrawerBtn: document.getElementById('closeThemeDrawerBtn'),
+  themeOptionCards: document.querySelectorAll('.theme-option-card'),
+  settingsThemeSelect: document.getElementById('settingsThemeSelect'),
 
   // Sound & Settings
   muteToggleBtn: document.getElementById('muteToggleBtn'),
@@ -546,24 +533,25 @@ function getModeDurationMinutes(mode) {
 }
 
 function getModeTagline(mode) {
+  const isSynth = settings.theme === 'synthwave';
   switch (mode) {
     case 'shortBreak':
-      return 'PIT STOP · COOLING DOWN CORE';
+      return isSynth ? 'Recharge your cybernetics. Take 5.' : 'Step away, stretch, and refresh your mind.';
     case 'longBreak':
-      return 'CRUISING THE SYNTHWAVE HORIZON';
+      return isSynth ? 'Horizon reached! Full reboot & cool down.' : 'Great milestone achieved! Rest and recharge.';
     case 'focus':
     default:
-      return 'CHANNEL SYNTHWAVE MOMENTUM';
+      return isSynth ? 'Locked in. Channel the synthwave momentum.' : 'Time to concentrate and build momentum.';
   }
 }
 
 function getCircleCircumference() {
-  if (!elements.progressCircle) return 867.08;
-  const radius = elements.progressCircle.r?.baseVal?.value || 138;
+  if (!elements.progressCircle) return 879.64;
+  const radius = elements.progressCircle.r?.baseVal?.value || 140;
   return 2 * Math.PI * radius;
 }
 
-// Dynamic 80s Favicon
+// Update Dynamic Favicon
 const faviconCanvas = document.createElement('canvas');
 faviconCanvas.width = 32;
 faviconCanvas.height = 32;
@@ -580,10 +568,10 @@ function updateFavicon(fraction, mode) {
 
   ctx.beginPath();
   ctx.arc(16, 16, 14, 0, 2 * Math.PI);
-  ctx.fillStyle = '#090314';
+  ctx.fillStyle = '#0B0416';
   ctx.fill();
 
-  const color = mode === 'focus' ? '#FF007F' : (mode === 'shortBreak' ? '#00F0FF' : '#9D00FF');
+  const color = mode === 'focus' ? '#FF007F' : (mode === 'shortBreak' ? '#00F0FF' : '#A855F7');
   ctx.beginPath();
   ctx.arc(16, 16, 12, -Math.PI / 2, (-Math.PI / 2) + (fraction * 2 * Math.PI));
   ctx.strokeStyle = color;
@@ -591,6 +579,30 @@ function updateFavicon(fraction, mode) {
   ctx.stroke();
 
   faviconLink.href = faviconCanvas.toDataURL();
+}
+
+// =============================================================================
+// Theme Switcher Engine
+// =============================================================================
+
+function setTheme(themeName) {
+  settings.theme = themeName;
+  elements.body.setAttribute('data-theme', themeName);
+
+  elements.themeOptionCards.forEach(card => {
+    card.classList.toggle('active', card.dataset.theme === themeName);
+  });
+
+  if (elements.settingsThemeSelect) {
+    elements.settingsThemeSelect.value = themeName;
+  }
+
+  saveSettings();
+  updateDisplay();
+}
+
+function toggleThemeDrawer() {
+  elements.themePaletteDrawer.classList.toggle('hidden');
 }
 
 // =============================================================================
@@ -609,16 +621,16 @@ function updateDisplay() {
   const offset = circumference * (1 - progressRatio);
   elements.progressCircle.style.strokeDashoffset = offset;
 
-  const modeLabels = { focus: '⚡ FOCUS', shortBreak: '☕ PIT STOP', longBreak: '🌴 CRUISE' };
-  document.title = `${timeFormatted} — ${modeLabels[timerState.mode]} // SYNTH·PULSE`;
+  const modeLabels = { focus: '⚡ Focus', shortBreak: '☕ Break', longBreak: '🌴 Long Break' };
+  document.title = `${timeFormatted} — ${modeLabels[timerState.mode]} | FocusPulse`;
   updateFavicon(progressRatio, timerState.mode);
 
   if (timerState.mode === 'focus') {
-    elements.sessionBadgeText.textContent = `ROUND 0${timerState.cycleCount} / 04`;
+    elements.sessionBadgeText.textContent = `Focus Session #${timerState.cycleCount}`;
   } else if (timerState.mode === 'shortBreak') {
-    elements.sessionBadgeText.textContent = `PIT STOP (0${timerState.cycleCount}/04)`;
+    elements.sessionBadgeText.textContent = `Short Break (${timerState.cycleCount}/4)`;
   } else {
-    elements.sessionBadgeText.textContent = `CRUISE COMPLETED`;
+    elements.sessionBadgeText.textContent = `Long Break Complete`;
   }
   elements.timerTagline.textContent = getModeTagline(timerState.mode);
 
@@ -630,9 +642,8 @@ function updateDisplay() {
 
   elements.body.setAttribute('data-mode', timerState.mode);
 
-  // LED & Ignition Pushbutton state
   if (timerState.isRunning) {
-    elements.startPauseText.textContent = 'PAUSE';
+    elements.startPauseText.textContent = 'Pause';
     elements.startPauseIcon.innerHTML = `
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
@@ -640,33 +651,24 @@ function updateDisplay() {
       </svg>
     `;
     elements.body.classList.add('is-running');
-    elements.ledRec.classList.add('active');
-    startVUMeter();
   } else {
-    elements.startPauseText.textContent = timerState.mode === 'focus' ? 'IGNITION' : 'START BREAK';
+    elements.startPauseText.textContent = timerState.mode === 'focus' ? 'Start Focus' : 'Start Break';
     elements.startPauseIcon.innerHTML = `
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <polygon points="5 3 19 12 5 21 5 3"></polygon>
       </svg>
     `;
     elements.body.classList.remove('is-running');
-    elements.ledRec.classList.remove('active');
-    if (currentAmbientSound === 'none') {
-      stopVUMeter();
-    }
   }
 
-  // Arcade Scoreboard & Power Meter
-  const scoreVal = (stats.completedSessions * 1000) + (stats.focusMinutes * 50);
-  elements.statScore.textContent = scoreVal.toString().padStart(6, '0');
+  elements.headerPomoCount.textContent = stats.completedSessions;
   elements.statCompletedSessions.textContent = stats.completedSessions;
   elements.statTotalMinutes.textContent = stats.focusMinutes;
-  elements.statCycleProgress.textContent = `${timerState.cycleCount} / 4`;
-  elements.meterFill.style.width = `${(timerState.cycleCount / 4) * 100}%`;
+  elements.statCycleProgress.textContent = `${timerState.cycleCount}/4`;
 }
 
 // =============================================================================
-// Timer Actions
+// Timer State Actions
 // =============================================================================
 
 function switchMode(newMode, forceDuration = null) {
@@ -756,17 +758,6 @@ function adjustMinutes(deltaMinutes) {
   updateDisplay();
 }
 
-function resetAllStats() {
-  initAudioContext();
-  stats.completedSessions = 0;
-  stats.focusMinutes = 0;
-  timerState.cycleCount = 1;
-  saveStats();
-  updateDisplay();
-  playUnmuteFeedback();
-  showToast('🏆', 'SCORE & STATS RESET', 'XP Score, completed sessions, and round cycle reset to 0.');
-}
-
 function handleTimerCompletion() {
   pauseTimer();
 
@@ -777,7 +768,7 @@ function handleTimerCompletion() {
     stats.focusMinutes += Math.round(timerState.totalDurationSeconds / 60);
     saveStats();
 
-    showToast('⚡', 'MISSION COMPLETE // +1000 PTS', `Awesome run! Round ${timerState.cycleCount} of 4 complete.`);
+    showToast('⚡', 'Focus Session Completed!', `Level complete! Round ${timerState.cycleCount} of 4 done.`);
 
     if (timerState.cycleCount >= 4) {
       switchMode('longBreak');
@@ -787,7 +778,7 @@ function handleTimerCompletion() {
       if (settings.autoStartBreaks) startTimer();
     }
   } else {
-    showToast('🚀', 'PIT STOP OVER // READY UP', 'Time to jump back into hyper focus!');
+    showToast('🚀', 'Break Ended!', 'Ready to hit the next synthwave streak?');
     if (timerState.mode === 'longBreak') {
       timerState.cycleCount = 1;
     } else {
@@ -870,6 +861,7 @@ function saveStats() {
 // =============================================================================
 
 function openSettings() {
+  elements.settingsThemeSelect.value = settings.theme;
   elements.inputFocus.value = settings.focusDuration;
   elements.inputShortBreak.value = settings.shortBreakDuration;
   elements.inputLongBreak.value = settings.longBreakDuration;
@@ -896,6 +888,7 @@ function closeSettings() {
 
 function saveSettingsForm(e) {
   e.preventDefault();
+  setTheme(elements.settingsThemeSelect.value);
   settings.focusDuration = Math.max(1, parseInt(elements.inputFocus.value, 10) || 25);
   settings.shortBreakDuration = Math.max(1, parseInt(elements.inputShortBreak.value, 10) || 5);
   settings.longBreakDuration = Math.max(1, parseInt(elements.inputLongBreak.value, 10) || 15);
@@ -915,6 +908,7 @@ function saveSettingsForm(e) {
 
 function resetSettingsToDefaults() {
   settings = { ...DEFAULT_SETTINGS };
+  setTheme(settings.theme);
   saveSettings();
   updateMasterVolume();
   updateMuteUI();
@@ -930,9 +924,9 @@ function toggleMute() {
 
   if (!settings.isMuted) {
     playUnmuteFeedback();
-    showToast('🔊', 'AUDIO UNMUTED', 'Console SFX and Ambient soundscapes active.');
+    showToast('🔊', 'Sound Unmuted', 'Audio alerts and ambient sounds are active.');
   } else {
-    showToast('🔇', 'AUDIO MUTED', 'Console SFX and Ambient soundscapes silenced.');
+    showToast('🔇', 'Sound Muted', 'Audio alerts and ambient sounds are silenced.');
   }
 }
 
@@ -957,27 +951,14 @@ function updateMuteUI() {
 // =============================================================================
 
 function setupEventListeners() {
-  // Main Ignition & Controls
+  // Main Controls
   elements.startPauseBtn.addEventListener('click', toggleStartPause);
   elements.resetBtn.addEventListener('click', resetTimer);
   elements.skipBtn.addEventListener('click', skipPhase);
-
-  // Reset Stats Button
-  if (elements.resetStatsBtn) {
-    elements.resetStatsBtn.addEventListener('click', resetAllStats);
-  }
-
-  // Time Trim Controls
   elements.plusMinuteBtn.addEventListener('click', () => adjustMinutes(1));
   elements.minusMinuteBtn.addEventListener('click', () => adjustMinutes(-1));
-  if (elements.plus5MinBtn) {
-    elements.plus5MinBtn.addEventListener('click', () => adjustMinutes(5));
-  }
-  if (elements.minus5MinBtn) {
-    elements.minus5MinBtn.addEventListener('click', () => adjustMinutes(-5));
-  }
 
-  // Mode Rockers
+  // Mode Tabs
   elements.modeTabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const mode = tab.dataset.mode;
@@ -987,12 +968,23 @@ function setupEventListeners() {
     });
   });
 
-  // Cassette Ambient Tracks
-  elements.ambientTracks.forEach(track => {
-    track.addEventListener('click', () => {
-      elements.ambientTracks.forEach(t => t.classList.remove('active'));
-      track.classList.add('active');
-      setAmbientSound(track.dataset.sound);
+  // Ambient Audio Chips
+  elements.ambientChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      elements.ambientChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      setAmbientSound(chip.dataset.sound);
+    });
+  });
+
+  // Theme Switcher Drawer
+  elements.themePickerBtn.addEventListener('click', toggleThemeDrawer);
+  elements.closeThemeDrawerBtn.addEventListener('click', toggleThemeDrawer);
+  elements.themeOptionCards.forEach(card => {
+    card.addEventListener('click', () => {
+      setTheme(card.dataset.theme);
+      showToast('🎨', 'Theme Activated', `Switched to ${card.querySelector('strong').textContent}`);
+      elements.themePaletteDrawer.classList.add('hidden');
     });
   });
 
@@ -1003,13 +995,13 @@ function setupEventListeners() {
   elements.settingsForm.addEventListener('submit', saveSettingsForm);
   elements.resetDefaultsBtn.addEventListener('click', resetSettingsToDefaults);
 
-  // Sound preview in settings
+  // Sound preview test in settings
   elements.previewSoundBtn.addEventListener('click', () => {
     const selectedSound = elements.soundSelect.value;
     playAlarmSound(selectedSound, true);
   });
 
-  // Volume slider
+  // Volume slider in settings
   elements.volumeSlider.addEventListener('input', (e) => {
     const val = parseInt(e.target.value, 10);
     elements.volumeValue.textContent = `${val}%`;
@@ -1023,9 +1015,10 @@ function setupEventListeners() {
     updateMasterVolume();
   });
 
+  // Toast close
   elements.toastCloseBtn.addEventListener('click', hideToast);
 
-  // Keyboard Shortcuts
+  // Global Keyboard Shortcuts
   window.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
@@ -1041,12 +1034,17 @@ function setupEventListeners() {
     } else if (e.key === 'm' || e.key === 'M') {
       e.preventDefault();
       toggleMute();
+    } else if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      toggleThemeDrawer();
     } else if (e.key === 'Escape') {
       closeSettings();
       hideToast();
+      elements.themePaletteDrawer.classList.add('hidden');
     }
   });
 
+  // Close modal when clicking outside dialog backdrop
   elements.settingsModal.addEventListener('click', (e) => {
     const dialogDimensions = elements.settingsModal.getBoundingClientRect();
     if (
@@ -1066,6 +1064,7 @@ function setupEventListeners() {
 
 function init() {
   loadSavedData();
+  setTheme(settings.theme || 'synthwave');
   updateMuteUI();
   setupEventListeners();
 
